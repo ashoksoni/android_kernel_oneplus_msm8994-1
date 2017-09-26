@@ -2280,6 +2280,9 @@ int rmnet_ipa_set_data_quota(struct wan_ioctl_set_data_quota *data)
 	int index;
 	struct ipa_set_data_usage_quota_req_msg_v01 req;
 
+	/* prevent string buffer overflows */
+	data->interface_name[IFNAMSIZ-1] = '\0';
+
 	index = find_vchannel_name_index(data->interface_name);
 	IPAWANERR("iface name %s, quota %lu\n",
 			  data->interface_name,
@@ -2604,6 +2607,8 @@ static int __init ipa_wwan_init(void)
 	atomic_set(&is_initialized, 0);
 	atomic_set(&is_ssr, 0);
 
+	ipa_qmi_init();
+
 	/* Register for Modem SSR */
 	subsys = subsys_notif_register_notifier(SUBSYS_MODEM, &ssr_notifier);
 	if (!IS_ERR(subsys))
@@ -2614,6 +2619,7 @@ static int __init ipa_wwan_init(void)
 
 static void __exit ipa_wwan_cleanup(void)
 {
+	ipa_qmi_cleanup();
 	platform_driver_unregister(&rmnet_ipa_driver);
 }
 
